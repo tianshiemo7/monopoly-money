@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🏦 大富翁 · 金库</title>
+<style>
+/* ============================================================
+   PREMIUM MONOPOLY MONEY TRACKER — 高端深色主题
+   ============================================================ */
+:root {
+  --bg-deep:    #0a0e17;
+  --bg-card:    #111827;
+  --bg-card2:   #161e2c;
+  --gold:       #d4a745;
+  --gold-light: #f0d68a;
+  --gold-dark:  #a67c28;
+  --accent-r:   #e74c3c;
+  --accent-g:   #2ecc71;
+  --accent-b:   #3b82f6;
+  --text:       #e2e8f0;
+  --text-dim:   #8899aa;
+  --text-muted: #556677;
+  --border:     #1e293b;
+  --radius:     16px;
+  --radius-sm:  10px;
+  --shadow-lg:  0 20px 60px rgba(0,0,0,0.5);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex; justify-content: center;
+  padding: 0 0 100px 0;
+  -webkit-overflow-scrolling: touch;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(212,167,69,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.04) 0%, transparent 50%);
+}
+#app { width: 100%; max-width: 480px; }
+
+/* ---- 顶部栏 ---- */
+#top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  margin: 10px 12px 0 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  position: sticky; top: 10px; z-index: 50;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+#top-bar .brand { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+#top-bar .brand span { color: var(--gold); }
+#room-pill {
+  display: none;
+  font-size: 13px; font-weight: 600; padding: 4px 12px;
+  background: rgba(212,167,69,0.12); color: var(--gold-light);
+  border-radius: 20px; letter-spacing: 0.5px;
+}
+#conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+#conn-dot.on { background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.5); }
+#conn-dot.off { background: #555; }
+
+/* ---- 面板 ---- */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+
+/* ---- 英雄资金展示区 ---- */
+.money-hero {
+  text-align: center;
+  padding: 20px 16px 16px 2px;
+  margin: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid #1e293b;
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+.money-hero::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold-light), var(--gold-dark), transparent);
+}
+.money-hero::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(212,167,69,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.money-hero .player-label {
+  font-size: 13px; color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 4px;
+}
+.money-hero .player-label .host-icon {
+  display: inline-block; margin-left: 4px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  color: #000; font-size: 10px; padding: 1px 6px; border-radius: 10px;
+  vertical-align: middle;
+}
+.money-hero .money-amount {
+  font-size: 48px; font-weight: 800; letter-spacing: -1px;
+  font-family: var(--font-mono);
+  background: linear-gradient(180deg, #ffffff 0%, #c0c8d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+.money-hero .money-amount.pos { background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; background-clip: text; }
+.money-hero .money-amount.neg { background: linear-gradient(180deg, #f87171 0%, #ef4444 100%); -webkit-background-clip: text; background-clip: text; }
+.money-hero .money-amount.zero { background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%); -webkit-background-clip: text; background-clip: text; }
+.money-hero .subtitle {
+  font-size: 12px; color: var(--text-muted); margin-top: 2px; letter-spacing: 1px;
+}
+.amount-changed { animation: heroPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes heroPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* ---- 快捷事件区 ---- */
+.event-section { margin: 12px; }
+.event-section .section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.event-section .section-head .title {
+  font-size: 13px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1.5px;
+}
+.event-section .section-head .add-event-btn {
+  font-size: 12px; padding: 5px 12px; border-radius: 20px;
+  background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+  cursor: pointer; font-weight: 600; font-family: var(--font);
+  transition: all .2s;
+}
+.event-section .section-head .add-event-btn:active { background: var(--bg-card2); border-color: var(--gold-dark); color: var(--gold); }
+
+.event-chips {
+  display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px 0;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.event-chips::-webkit-scrollbar { display: none; }
+
+.event-chip {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-radius: 25px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font);
+  transition: all .15s;
+  scroll-snap-align: start;
+  position: relative;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+}
+.event-chip:active { transform: scale(0.94); filter: brightness(1.2); }
+.event-chip.income {
+  background: linear-gradient(135deg, #14532d, #1a3d2a);
+  color: #4ade80;
+  border: 1px solid rgba(74,222,128,0.25);
+}
+.event-chip.expense {
+  background: linear-gradient(135deg, #4a1525, #3d1a1a);
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.25);
+}
+.event-chip .chip-amount {
+  font-family: var(--font-mono); font-size: 13px; opacity: 0.85;
+}
+.event-chip .chip-del {
+  margin-left: 4px; width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #888; flex-shrink: 0;
+  transition: all .2s;
+}
+.event-chip .chip-del:active { background: rgba(255,0,0,0.3); color: #f87171; }
+
+.empty-chips {
+  text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 13px;
+}
+
+/* ---- 玩家卡片 ---- */
+.player-cards {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.player-mini {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card2);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all .2s;
+}
+.player-mini.me { border-color: rgba(212,167,69,0.35); background: #181f2e; }
+.player-mini .p-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  background: var(--accent-g); box-shadow: 0 0 6px rgba(46,204,113,0.5);
+}
+.player-mini .p-dot.off { background: #555; box-shadow: none; }
+.player-mini .p-info { flex: 1; min-width: 0; }
+.player-mini .p-name { font-size: 14px; font-weight: 600; }
+.player-mini .p-name .me-tag { font-size: 11px; color: var(--gold); margin-left: 4px; }
+.player-mini .p-money {
+  font-size: 18px; font-weight: 700; font-family: var(--font-mono);
+}
+.player-mini .p-money.pos { color: #4ade80; }
+.player-mini .p-money.neg { color: #f87171; }
+.player-mini .p-money.zero { color: #fbbf24; }
+.player-mini .p-transfer {
+  font-size: 12px; padding: 7px 14px; border-radius: 20px; flex-shrink: 0;
+  background: transparent; border: 1px solid #2a3a5a; color: #8899aa;
+  font-weight: 600; cursor: pointer; font-family: var(--font);
+  transition: all .2s;
+}
+.player-mini .p-transfer:active { background: #1a2a4a; border-color: var(--accent-b); color: var(--accent-b); }
+
+/* ---- 手动操作 ---- */
+.manual-ops {
+  display: flex; gap: 8px; margin: 12px;
+}
+.manual-ops input {
+  flex: 1;
+  font-size: 16px; padding: 14px 16px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm);
+  font-family: var(--font-mono); outline: none;
+  -webkit-appearance: none;
+}
+.manual-ops input:focus { border-color: var(--gold-dark); }
+.manual-ops .op-btn {
+  padding: 14px 20px; border-radius: var(--radius-sm); font-size: 16px;
+  font-weight: 700; border: none; cursor: pointer; font-family: var(--font);
+  transition: all .12s;
+  display: flex; align-items: center; gap: 4px;
+}
+.manual-ops .op-btn:active { transform: scale(0.94); }
+.manual-ops .op-btn.add { background: #14532d; color: #4ade80; }
+.manual-ops .op-btn.sub { background: #4a1525; color: #f87171; }
+
+/* ---- 金额预设 ---- */
+.amount-presets {
+  display: flex; gap: 5px; margin: 0 12px 12px 12px; flex-wrap: wrap;
+}
+.amount-presets button {
+  flex: 1 0 auto; min-width: 44px;
+  font-size: 12px; padding: 7px 10px; border-radius: 8px;
+  background: var(--bg-card2); border: 1px solid var(--border); color: var(--text-dim);
+  font-weight: 600; cursor: pointer; font-family: var(--font);
+  transition: all .15s;
+}
+.amount-presets button:active { background: #1e2a40; border-color: var(--gold-dark); color: var(--gold); }
+
+/* ---- 日志（折叠） ---- */
+.log-header {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+  padding: 18px;
+  margin: 12px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.log-header .log-title { font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+.log-header .log-arrow { color: var(--text-muted); font-size: 14px; transition: transform .3s; }
+.log-header.open .log-arrow { transform: rotate(180deg); }
+#log-body { display: none; margin: 0 12px 12px 12px; }
+#log-body.open { display: block; }
+.log-list { max-height: 200px; overflow-y: auto; }
+.log-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 12px; flex-wrap: wrap;
+}
+.log-item .l-time { color: var(--text-muted); font-size: 11px; flex-shrink: 0; width: 48px; }
+.log-item .l-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  flex-shrink: 0; letter-spacing: 0.5px;
+}
+.log-item .l-badge.income  { background: rgba(46,204,113,0.15); color: #4ade80; }
+.log-item .l-badge.expense { background: rgba(231,76,60,0.15); color: #f87171; }
+.log-item .l-badge.transfer { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.log-item .l-desc { flex: 1; min-width: 0; color: var(--text-dim); }
+.log-item .l-amount { font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
+.log-item .l-amount.plus { color: #4ade80; }
+.log-item .l-amount.minus { color: #f87171; }
+
+/* ---- 底部操作栏 ---- */
+#bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom)) 12px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  display: none;
+  gap: 8px;
+  z-index: 100;
+}
+#bottom-bar button {
+  flex: 1; padding: 11px 12px; border-radius: 25px; font-size: 14px;
+  font-weight: 700; border: none; cursor: pointer; font-family: var(--font);
+  transition: all .12s;
+}
+#bottom-bar button:active { transform: scale(0.94); }
+#bottom-bar .bb-add { background: linear-gradient(135deg, #166534, #15803d); color: #fff; }
+#bottom-bar .bb-sub { background: linear-gradient(135deg, #7f1d1d, #991b1b); color: #fff; }
+#bottom-bar .bb-xfer { background: linear-gradient(135deg, #1e3a5f, #1e40af); color: #fff; }
+#bottom-bar .bb-reset { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+
+/* ---- 大厅 ---- */
+#lobby { padding: 40px 12px 0 12px; }
+.lobby-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px 24px; margin-bottom: 16px;
+  box-shadow: var(--shadow-lg);
+}
+.lobby-card h2 { font-size: 22px; margin-bottom: 4px; letter-spacing: -0.5px; }
+.lobby-card .sub { font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
+.lobby-card label { display: block; font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 600; }
+.lobby-card input {
+  width: 100%; font-size: 17px; padding: 14px 16px;
+  background: var(--bg-card2); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm);
+  font-family: var(--font); outline: none; margin-bottom: 16px;
+  -webkit-appearance: none;
+}
+.lobby-card input:focus { border-color: var(--gold-dark); }
+.lobby-card .btn-primary {
+  width: 100%; padding: 15px; border-radius: var(--radius-sm); font-size: 17px;
+  font-weight: 700; border: none; cursor: pointer; font-family: var(--font);
+  margin-bottom: 10px;
+}
+.lobby-card .btn-create { background: linear-gradient(135deg, var(--gold-dark), #c8963a); color: #000; }
+.lobby-card .btn-join  { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.lobby-card .join-row { display: flex; gap: 8px; margin-top: 16px; }
+.lobby-card .join-row input { flex: 1; margin-bottom: 0; }
+.lobby-card .join-row .btn-join { width: auto; margin-bottom: 0; padding: 14px 24px; }
+.lobby-card .money-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+.lobby-card .money-row label { margin-bottom: 0; white-space: nowrap; }
+.lobby-card .money-row input { margin-bottom: 0; text-align: center; font-size: 20px; font-family: var(--font-mono); }
+
+.ip-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px; }
+
+/* ---- 弹窗 ---- */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+}
+.modal-sheet {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0; padding: 20px 20px 30px 20px;
+  width: 100%; max-width: 480px; max-height: 85dvh; overflow-y: auto;
+  animation: sheetUp .25s ease-out;
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-sheet h3 { font-size: 17px; margin-bottom: 18px; text-align: center; letter-spacing: -0.3px; }
+.modal-sheet input, .modal-sheet select {
+  width: 100%; font-size: 16px; padding: 13px 16px;
+  background: var(--bg-card2); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm);
+  font-family: var(--font); outline: none; margin-bottom: 12px;
+  -webkit-appearance: none;
+}
+.modal-sheet input:focus, .modal-sheet select:focus { border-color: var(--gold-dark); }
+.modal-sheet .segmented {
+  display: flex; gap: 0; margin-bottom: 14px; border-radius: var(--radius-sm);
+  overflow: hidden; border: 1px solid var(--border);
+}
+.modal-sheet .segmented button {
+  flex: 1; padding: 12px; font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; font-family: var(--font);
+  background: var(--bg-card2); color: var(--text-dim);
+  transition: all .2s;
+}
+.modal-sheet .segmented button.active.inc { background: #14532d; color: #4ade80; }
+.modal-sheet .segmented button.active.exp { background: #4a1525; color: #f87171; }
+.modal-sheet .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+.modal-sheet .btn-row button { flex: 1; padding: 14px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 700; border: none; cursor: pointer; font-family: var(--font); }
+.modal-sheet .btn-confirm { background: linear-gradient(135deg, var(--gold-dark), #c8963a); color: #000; }
+.modal-sheet .btn-cancel  { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  padding: 10px 24px; border-radius: 25px; font-weight: 600; font-size: 14px;
+  z-index: 300; opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.toast.show { opacity: 1; }
+.toast.err { background: #dc2626; color: #fff; }
+.toast.ok  { background: #16a34a; color: #fff; }
+
+/* ---- 响应式 ---- */
+@media (min-width: 480px) {
+  .money-hero .money-amount { font-size: 56px; }
+}
+@media (max-width: 360px) {
+  .money-hero .money-amount { font-size: 38px; }
+  .event-chip { font-size: 13px; padding: 8px 14px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ---- 顶部栏 ---- -->
+  <div id="top-bar">
+    <div class="brand">🏦 大富翁<span>·金库</span></div>
+    <span id="room-pill">房间 —</span>
+    <div id="conn-dot" class="off"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ========== 大厅 ========== -->
+  <div id="lobby">
+    <div class="lobby-card">
+      <h2>创建新局</h2>
+      <p class="sub">设定初始资金，生成房间码邀请好友</p>
+      <label>你的昵称</label>
+      <input type="text" id="lobby-name" placeholder="输入昵称" maxlength="8" value="" autocomplete="off">
+      <label>初始资金</label>
+      <div class="money-row">
+        <input type="number" id="lobby-money" value="1500" min="1" max="99999999" step="100" inputmode="numeric">
+      </div>
+      <div class="amount-presets" style="margin:0 0 16px 0;">
+        <button onclick="setInitMoney(500)">500</button>
+        <button onclick="setInitMoney(1000)">1k</button>
+        <button onclick="setInitMoney(1500)">1.5k</button>
+        <button onclick="setInitMoney(2000)">2k</button>
+        <button onclick="setInitMoney(5000)">5k</button>
+        <button onclick="setInitMoney(10000)">1w</button>
+        <button onclick="setInitMoney(50000)">5w</button>
+      </div>
+      <button class="btn-primary btn-create" id="btn-create">🏠 创建房间</button>
+      <div class="join-row">
+        <input type="text" id="lobby-code" placeholder="4位房间码" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off">
+        <button class="btn-primary btn-join" id="btn-join" style="margin-bottom:0;">加入</button>
+      </div>
+    </div>
+    <p class="ip-hint">本机 <span id="ip-show">localhost:3000</span> &nbsp;|&nbsp; 初始 ¥<span id="init-show">1,500</span>/人 &nbsp;|&nbsp; 2-8人</p>
+  </div>
+
+  <!-- ========== 主界面 ========== -->
+  <div id="main-area" style="display:none;">
+
+    <!-- 资金英雄区 -->
+    <div class="money-hero" id="money-hero">
+      <div class="player-label">
+        <span id="my-name-display"></span><span id="host-badge-display" class="host-icon" style="display:none;">房主</span>
+      </div>
+      <div class="money-amount pos" id="my-money-display">¥0</div>
+      <div class="subtitle">当前资金</div>
+    </div>
+
+    <!-- 快捷事件 -->
+    <div class="event-section">
+      <div class="section-head">
+        <span class="title">⚡ 快捷事件</span>
+        <button class="add-event-btn" onclick="openEventModal()">+ 自定义</button>
+      </div>
+      <div class="event-chips" id="event-chips">
+        <div class="empty-chips">还没有事件，点击"+ 自定义"创建</div>
+      </div>
+    </div>
+
+    <!-- 手动输入 -->
+    <div class="manual-ops">
+      <input type="number" id="amount-input" placeholder="金额" min="1" step="100" value="200" inputmode="numeric">
+      <button class="op-btn add" onclick="doAdd()">+</button>
+      <button class="op-btn sub" onclick="doSub()">−</button>
+    </div>
+    <div class="amount-presets">
+      <button onclick="setAmt(50)">50</button>
+      <button onclick="setAmt(100)">100</button>
+      <button onclick="setAmt(200)">200</button>
+      <button onclick="setAmt(500)">500</button>
+      <button onclick="setAmt(1000)">1k</button>
+      <button onclick="setAmt(1500)">1.5k</button>
+      <button onclick="setAmt(2000)">2k</button>
+      <button onclick="setAmt(5000)">5k</button>
+    </div>
+
+    <!-- 玩家列表 -->
+    <div class="panel">
+      <div style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:12px;">👥 玩家资金</div>
+      <div class="player-cards" id="player-list"></div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="log-header" id="log-toggle" onclick="toggleLog()">
+      <span class="log-title">📋 交易记录</span>
+      <span class="log-arrow">▼</span>
+    </div>
+    <div id="log-body">
+      <div class="log-list" id="log-list"><div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">暂无记录</div></div>
+    </div>
+
+    <div style="height:100px;"></div><!-- 底部栏占位 -->
+  </div>
+</div>
+
+<!-- ---- 底部快捷栏 ---- -->
+<div id="bottom-bar">
+  <button class="bb-add" onclick="doAdd()">+</button>
+  <button class="bb-sub" onclick="doSub()">−</button>
+  <button class="bb-xfer" onclick="scrollToPlayers()">💸</button>
+  <button class="bb-reset" onclick="doReset()">↺</button>
+</div>
+
+<!-- ========== 新建事件弹窗 ========== -->
+<div class="modal-mask" id="event-modal" style="display:none;">
+  <div class="modal-sheet">
+    <h3>⚡ 自定义事件</h3>
+    <div class="segmented" id="event-cat">
+      <button data-cat="income" class="active inc" onclick="setEventCat('income', this)">💰 收入</button>
+      <button data-cat="expense" onclick="setEventCat('expense', this)">💸 支出</button>
+    </div>
+    <input type="text" id="event-label" placeholder="事件名称（如：过路费）" maxlength="12" autocomplete="off">
+    <input type="number" id="event-amount" placeholder="金额" min="1" step="100" value="200" inputmode="numeric">
+    <div class="amount-presets" style="margin:0 0 12px 0;">
+      <button onclick="document.getElementById('event-amount').value=50">50</button>
+      <button onclick="document.getElementById('event-amount').value=100">100</button>
+      <button onclick="document.getElementById('event-amount').value=200">200</button>
+      <button onclick="document.getElementById('event-amount').value=500">500</button>
+      <button onclick="document.getElementById('event-amount').value=1000">1k</button>
+      <button onclick="document.getElementById('event-amount').value=2000">2k</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn-confirm" onclick="doAddEvent()">✅ 创建事件</button>
+      <button class="btn-cancel" onclick="closeEventModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 转账弹窗 ========== -->
+<div class="modal-mask" id="transfer-modal" style="display:none;">
+  <div class="modal-sheet">
+    <h3>💸 转账给 <span id="xfer-target" style="color:var(--gold);"></span></h3>
+    <input type="number" id="xfer-amount" placeholder="金额" min="1" step="100" inputmode="numeric">
+    <div class="amount-presets" style="margin:0 0 12px 0;">
+      <button onclick="document.getElementById('xfer-amount').value=50">50</button>
+      <button onclick="document.getElementById('xfer-amount').value=100">100</button>
+      <button onclick="document.getElementById('xfer-amount').value=200">200</button>
+      <button onclick="document.getElementById('xfer-amount').value=500">500</button>
+      <button onclick="document.getElementById('xfer-amount').value=1000">1k</button>
+      <button onclick="document.getElementById('xfer-amount').value=2000">2k</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn-confirm" onclick="doTransfer()">✅ 确认转账</button>
+      <button class="btn-cancel" onclick="closeTransferModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== JS ========== -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const socket = io({ transports: ['websocket', 'polling'], reconnection: true, reconnectionDelayMax: 5000 });
+
+// ---- 持久化 token（刷新不丢） ----
+const store = {
+  get(k) { try { return sessionStorage.getItem('mm_' + k); } catch (_) { return null; } },
+  set(k, v) { try { sessionStorage.setItem('mm_' + k, v); } catch (_) {} },
+  del(k) { try { sessionStorage.removeItem('mm_' + k); } catch (_) {} },
+};
+
+// ---- 状态 ----
+let myToken = store.get('token') || '';
+let myId = '';
+let xferTargetId = '';
+let eventCat = 'income';
+let currentEvents = [];
+
+// ---- 连接 ----
+socket.on('connect', () => {
+  $('conn-dot').className = 'on';
+  // 断线自动重连
+  const savedCode = store.get('code');
+  if (savedCode && myToken) {
+    socket.emit('join-room', { code: savedCode, token: myToken });
+  }
+});
+
+socket.on('disconnect', () => {
+  $('conn-dot').className = 'off';
+});
+
+socket.on('connect_error', () => {
+  toast('连接失败，请确认服务器已启动', 'err');
+});
+
+socket.on('error', ({ message }) => toast(message || '操作失败', 'err'));
+
+// ---- 大厅 ----
+$('btn-create').onclick = () => {
+  const name = ($('lobby-name').value.trim() || '玩家');
+  const money = parseInt($('lobby-money').value);
+  if (!Number.isFinite(money) || money <= 0) { toast('请输入有效的初始资金', 'err'); return; }
+  socket.emit('create-room', { name, initialMoney: Math.min(99999999, money) });
+};
+
+$('btn-join').onclick = () => {
+  const code = $('lobby-code').value.trim();
+  const name = $('lobby-name').value.trim();
+  if (!/^\d{4}$/.test(code)) { toast('请输入4位房间号', 'err'); return; }
+  socket.emit('join-room', { code, name, token: myToken || undefined });
+};
+
+function setInitMoney(v) { $('lobby-money').value = v; }
+
+// ---- 进房/出房 ----
+function enterRoom(code, token) {
+  myToken = token;
+  store.set('token', token);
+  store.set('code', code);
+  $('lobby').style.display = 'none';
+  $('main-area').style.display = 'block';
+  $('bottom-bar').style.display = 'flex';
+  $('room-pill').style.display = 'inline';
+  $('room-pill').textContent = '🏷 ' + code;
+}
+
+function exitRoom() {
+  myToken = ''; myId = '';
+  store.del('token'); store.del('code');
+  $('lobby').style.display = 'block';
+  $('main-area').style.display = 'none';
+  $('bottom-bar').style.display = 'none';
+  $('room-pill').style.display = 'none';
+}
+
+// ---- 房间事件 ----
+socket.on('room-created', ({ code, token, players, dealLog, events }) => {
+  enterRoom(code, token);
+  sync(players, dealLog, events);
+});
+socket.on('room-joined', ({ code, token, players, dealLog, events }) => {
+  enterRoom(code, token);
+  sync(players, dealLog, events);
+});
+socket.on('reconnected', ({ token, code, players, dealLog, events }) => {
+  enterRoom(code, token);
+  sync(players, dealLog, events);
+  toast('已重新连接', 'ok');
+});
+socket.on('player-joined', ({ players }) => renderPlayers(players));
+socket.on('player-left', ({ players }) => renderPlayers(players));
+socket.on('players-updated', ({ players }) => renderPlayers(players));
+socket.on('events-updated', ({ events }) => renderEvents(events));
+socket.on('room-closed', ({ reason }) => { toast(reason || '房间已关闭', 'err'); exitRoom(); });
+
+function sync(players, dealLog, events) {
+  currentEvents = events || [];
+  renderPlayers(players);
+  renderDealLog(dealLog || []);
+  renderEvents(currentEvents);
+}
+
+// ---- 金钱变动 ----
+socket.on('money-changed', ({ players, newLog }) => {
+  renderPlayers(players);
+  if (newLog) prependLog(newLog);
+});
+
+socket.on('game-reset', ({ players, dealLog }) => {
+  renderPlayers(players);
+  renderDealLog(dealLog || []);
+  toast('已重置', 'ok');
+});
+
+// ---- 操作 ----
+function doAdd() {
+  const amt = readAmt(); if (amt == null) return;
+  socket.emit('add-money', { amount: amt, label: '' });
+}
+function doSub() {
+  const amt = readAmt(); if (amt == null) return;
+  socket.emit('subtract-money', { amount: amt, label: '' });
+}
+function triggerEvent(eventId) {
+  if (!eventId) return;
+  socket.emit('trigger-event', { eventId });
+}
+
+function readAmt() {
+  const v = parseInt($('amount-input').value, 10);
+  if (!Number.isFinite(v) || v <= 0) { toast('请输入有效金额', 'err'); return null; }
+  return Math.min(99999999, v);
+}
+function setAmt(v) { $('amount-input').value = v; }
+
+// ---- 转账 ----
+function openTransferModal(pid, pname) {
+  if (!pid) return;
+  xferTargetId = pid;
+  $('xfer-target').textContent = esc(pname);
+  $('xfer-amount').value = $('amount-input').value;
+  $('transfer-modal').style.display = 'flex';
+  setTimeout(() => { const el = $('xfer-amount'); if (el) el.focus(); }, 200);
+}
+function closeTransferModal() { xferTargetId = ''; $('transfer-modal').style.display = 'none'; }
+function doTransfer() {
+  const amt = parseInt($('xfer-amount').value, 10);
+  if (!Number.isFinite(amt) || amt <= 0) { toast('请输入有效金额', 'err'); return; }
+  if (!xferTargetId) { toast('转账目标无效', 'err'); return; }
+  socket.emit('transfer-money', { toPlayerId: xferTargetId, amount: Math.min(99999999, amt), label: '' });
+  closeTransferModal();
+}
+$('transfer-modal').onclick = function(e) { if (e.target === this) closeTransferModal(); };
+
+// ---- 事件管理 ----
+function openEventModal() {
+  $('event-modal').style.display = 'flex';
+  $('event-label').value = '';
+  $('event-amount').value = $('amount-input').value;
+  setEventCat('income');
+  setTimeout(() => { const el = $('event-label'); if (el) el.focus(); }, 200);
+}
+function closeEventModal() { $('event-modal').style.display = 'none'; }
+function setEventCat(cat) {
+  eventCat = cat;
+  $('event-cat').querySelectorAll('button').forEach(b => {
+    b.className = '';
+    if (b.dataset.cat === cat) b.classList.add('active', cat === 'income' ? 'inc' : 'exp');
+  });
+}
+function doAddEvent() {
+  const label = $('event-label').value.trim();
+  const amount = parseInt($('event-amount').value, 10);
+  if (!label) { toast('请输入事件名称', 'err'); return; }
+  if (!Number.isFinite(amount) || amount <= 0) { toast('请输入有效金额', 'err'); return; }
+  socket.emit('add-event', { label, amount: Math.min(99999999, amount), category: eventCat });
+  closeEventModal();
+}
+function doRemoveEvent(eventId) {
+  if (!eventId) return;
+  socket.emit('remove-event', { eventId });
+}
+$('event-modal').onclick = function(e) { if (e.target === this) closeEventModal(); };
+
+// ---- 重置 ----
+function doReset() {
+  if (!confirm('确定重置所有资金？')) return;
+  socket.emit('reset-game');
+}
+
+// ---- 日志折叠 ----
+function toggleLog() {
+  $('log-toggle').classList.toggle('open');
+  $('log-body').classList.toggle('open');
+}
+
+// ---- 滚动 ----
+function scrollToPlayers() {
+  const el = document.querySelector('.player-cards');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---- 渲染 ----
+function renderPlayers(players) {
+  if (!Array.isArray(players)) return;
+  const me = players.find(p => p.token === myToken);
+  if (me) myId = me.id;
+
+  // 更新英雄区
+  if (me) {
+    $('my-name-display').textContent = me.name || '?';
+    $('host-badge-display').style.display = me.isHost ? 'inline-block' : 'none';
+    const m = Number.isFinite(me.money) ? me.money : 0;
+    const cls = m > 0 ? 'pos' : m < 0 ? 'neg' : 'zero';
+    const el = $('my-money-display');
+    el.className = 'money-amount ' + cls;
+    el.textContent = '¥' + m.toLocaleString('zh-CN');
+  }
+
+  // 玩家卡片
+  const container = $('player-list');
+  if (players.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:16px;font-size:13px;">等待玩家加入…</div>';
+    return;
+  }
+  container.innerHTML = players.map(p => {
+    const isMe = p.id === myId;
+    const m = Number.isFinite(p.money) ? p.money : 0;
+    const mCls = m > 0 ? 'pos' : m < 0 ? 'neg' : 'zero';
+    return `<div class="player-mini ${isMe ? 'me' : ''}">
+      <div class="p-dot ${p.isOnline ? '' : 'off'}"></div>
+      <div class="p-info">
+        <div class="p-name">${esc(p.name || '?')} ${p.isHost ? '👑' : ''} ${isMe ? '<span class="me-tag">我</span>' : ''}</div>
+        <div class="p-money ${mCls}">¥${m.toLocaleString('zh-CN')}</div>
+      </div>
+      ${!isMe ? `<button class="p-transfer" onclick="openTransferModal('${esc(p.id)}','${esc(p.name || '?')}')">💸</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderEvents(events) {
+  currentEvents = Array.isArray(events) ? events : [];
+  const container = $('event-chips');
+  if (currentEvents.length === 0) {
+    container.innerHTML = '<div class="empty-chips">还没有事件 — 点击「+ 自定义」创建快捷操作</div>';
+    return;
+  }
+  container.innerHTML = currentEvents.map(e => {
+    const isMine = e.creatorId === myId;
+    const amt = Number.isFinite(e.amount) ? e.amount : 0;
+    return `<button class="event-chip ${e.category === 'income' ? 'income' : 'expense'}" onclick="triggerEvent('${esc(e.id)}')">
+      ${e.category === 'income' ? '💰' : '💸'} ${esc(e.label || '?')}
+      <span class="chip-amount">${e.category === 'income' ? '+' : '−'}${amt.toLocaleString('zh-CN')}</span>
+      ${isMine ? `<span class="chip-del" onclick="event.stopPropagation();doRemoveEvent('${esc(e.id)}')">✕</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+function renderDealLog(log) {
+  const container = $('log-list');
+  if (!Array.isArray(log) || log.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">暂无记录</div>';
+    return;
+  }
+  container.innerHTML = log.slice().reverse().map(buildLog).join('');
+}
+
+function prependLog(entry) {
+  if (!entry || !entry.ts) return;
+  const container = $('log-list');
+  // 清除空状态占位
+  const ph = container.querySelector('div');
+  if (ph && /暂无记录/.test(ph.textContent || '')) container.innerHTML = '';
+  container.insertAdjacentHTML('afterbegin', buildLog(entry));
+  while (container.children.length > 200) container.lastChild.remove();
+
+  // 金额弹跳动画
+  const hero = $('my-money-display');
+  if (hero) {
+    hero.classList.remove('amount-changed');
+    void hero.offsetWidth;
+    hero.classList.add('amount-changed');
+  }
+}
+
+function buildLog(e) {
+  const t = new Date(e.ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  const isPlus  = (e.type === 'add' || e.type === 'income') || (e.type === 'transfer' && e.toId === myId);
+  const isMinus = (e.type === 'subtract' || e.type === 'expense') || (e.type === 'transfer' && e.fromId === myId);
+  const badge = (e.type === 'add' || e.type === 'income') ? '<span class="l-badge income">收入</span>'
+              : (e.type === 'subtract' || e.type === 'expense') ? '<span class="l-badge expense">支出</span>'
+              : '<span class="l-badge transfer">转账</span>';
+  const desc = (e.type === 'add' || e.type === 'income')
+      ? `${esc(e.fromName || '🏦')} → ${esc(e.toName || '?')}`
+    : (e.type === 'subtract' || e.type === 'expense')
+      ? `${esc(e.fromName || '?')} → ${esc(e.toName || '🏦')}`
+      : `${esc(e.fromName || '?')} → ${esc(e.toName || '?')}`;
+  const label = e.label ? ` <span style="color:#888;font-size:11px;">「${esc(e.label)}」</span>` : '';
+  const amtCls = isPlus ? 'plus' : (isMinus ? 'minus' : '');
+  const amt = Number.isFinite(e.amount) ? e.amount : 0;
+  return `<div class="log-item">
+    <span class="l-time">${t}</span>${badge}
+    <span class="l-desc">${desc}${label}</span>
+    <span class="l-amount ${amtCls}">¥${amt.toLocaleString('zh-CN')}</span>
+  </div>`;
+}
+
+// ---- 工具 ----
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"'\n\r\\]/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;', '\n':' ', '\r':'', '\\':'' })[c] || '');
+}
+function toast(msg, type) {
+  const el = $('toast');
+  if (!el) return;
+  el.textContent = msg; el.className = 'toast ' + type + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ---- IP 显示 ----
+$('ip-show').textContent = window.location.host;
+
+// ---- 键盘 ----
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEventModal(); closeTransferModal(); }
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (e.key === '+' || e.key === '=') { e.preventDefault(); doAdd(); }
+  if (e.key === '-') { e.preventDefault(); doSub(); }
+});
+</script>
+</body>
+</html>
